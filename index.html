@@ -112,10 +112,18 @@
                 </form>
             </section>
 
-            <section class="panel" aria-labelledby="logHeading">
+            <section class="panel" aria-labelledby="archiveHeading">
                 <div class="panel__header">
-                    <h2 id="logHeading">Locate log</h2>
-                    <p class="panel__subhead"><span id="ticketCount">0</span> locate<span id="ticketCountSuffix">s</span> recorded</p>
+                    <div class="panel__titles">
+                        <h2 id="archiveHeading">Ticket archive</h2>
+                        <p class="panel__subhead">Showing <span id="ticketCount">0</span> locate<span id="ticketCountSuffix">s</span></p>
+                    </div>
+                    <label class="panel__filter" for="archiveLocatorFilter">
+                        <span>Filter by locator</span>
+                        <select id="archiveLocatorFilter" name="archiveLocatorFilter">
+                            <option value="all">All locators</option>
+                        </select>
+                    </label>
                 </div>
                 <div id="ticketList" class="ticket-list" role="list">
                     <p class="empty-state">No locates recorded yet. Add your first entry with the form.</p>

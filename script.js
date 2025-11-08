@@ -132,6 +132,7 @@ const tickets = [];
 
 const form = document.getElementById('ticketForm');
 const locatorSelect = document.getElementById('locatorName');
+const archiveFilter = document.getElementById('archiveLocatorFilter');
 const ticketList = document.getElementById('ticketList');
 const ticketTemplate = document.getElementById('ticketTemplate');
 const ticketCount = document.getElementById('ticketCount');
@@ -140,20 +141,41 @@ const requiredFields = ['ticketNumber', 'jobAddress', 'locatorName', 'dateLocate
 
 populateLocatorOptions();
 attachValidationHandlers();
-form.addEventListener('submit', handleSubmit);
+archiveFilter?.addEventListener('change', () => renderTickets());
+form?.addEventListener('submit', handleSubmit);
+renderTickets();
 
 function populateLocatorOptions() {
-    const fragment = document.createDocumentFragment();
-    locatorOptions.forEach((name) => {
-        const option = document.createElement('option');
-        option.value = name;
-        option.textContent = name;
-        fragment.appendChild(option);
+    if (!locatorSelect) {
+        return;
+    }
+
+    const sortedLocators = [...locatorOptions].sort((a, b) => a.localeCompare(b));
+
+    sortedLocators.forEach((name) => {
+        const formOption = document.createElement('option');
+        formOption.value = name;
+        formOption.textContent = name;
+        locatorSelect.appendChild(formOption);
+
+        if (archiveFilter) {
+            const filterOption = document.createElement('option');
+            filterOption.value = name;
+            filterOption.textContent = name;
+            archiveFilter.appendChild(filterOption);
+        }
     });
-    locatorSelect.appendChild(fragment);
+
+    if (archiveFilter) {
+        archiveFilter.value = 'all';
+    }
 }
 
 function attachValidationHandlers() {
+    if (!form) {
+        return;
+    }
+
     requiredFields.forEach((fieldName) => {
         const input = form[fieldName];
         if (!input) return;
@@ -164,6 +186,10 @@ function attachValidationHandlers() {
 
 function handleSubmit(event) {
     event.preventDefault();
+
+    if (!form) {
+        return;
+    }
 
     const formElements = {
         ticketNumber: form.ticketNumber,
@@ -194,7 +220,9 @@ function handleSubmit(event) {
             tickets.unshift(ticket);
             renderTickets();
             form.reset();
-            locatorSelect.value = '';
+            if (locatorSelect) {
+                locatorSelect.value = '';
+            }
             requiredFields.forEach(clearFieldError);
         })
         .catch((error) => {
@@ -221,6 +249,10 @@ function validateForm(fields) {
 }
 
 function setFieldError(fieldName, message) {
+    if (!form) {
+        return;
+    }
+
     const errorEl = form.querySelector(`[data-error-for="${fieldName}"]`);
     if (errorEl) {
         errorEl.textContent = message;
@@ -228,6 +260,10 @@ function setFieldError(fieldName, message) {
 }
 
 function clearFieldError(fieldName) {
+    if (!form) {
+        return;
+    }
+
     const input = form[fieldName];
     if (input) {
         input.removeAttribute('aria-invalid');
@@ -248,15 +284,28 @@ function readFileAsDataURL(file) {
 }
 
 function renderTickets() {
+    if (!ticketList || !ticketTemplate) {
+        return;
+    }
+
     ticketList.innerHTML = '';
 
-    if (!tickets.length) {
+    const selectedLocator = archiveFilter?.value || 'all';
+    const visibleTickets =
+        selectedLocator === 'all'
+            ? tickets
+            : tickets.filter((ticket) => ticket.locatorName === selectedLocator);
+
+    if (!visibleTickets.length) {
         const empty = document.createElement('p');
         empty.className = 'empty-state';
-        empty.textContent = 'No locates recorded yet. Add your first entry with the form.';
+        empty.textContent =
+            selectedLocator === 'all'
+                ? 'No locates recorded yet. Add your first entry with the form.'
+                : 'No locates recorded for this locator yet.';
         ticketList.appendChild(empty);
     } else {
-        tickets.forEach((ticket) => {
+        visibleTickets.forEach((ticket) => {
             const entry = ticketTemplate.content.firstElementChild.cloneNode(true);
             const numberEl = entry.querySelector('.ticket__number');
             const addressEl = entry.querySelector('.ticket__address');
@@ -301,6 +350,10 @@ function renderTickets() {
         });
     }
 
-    ticketCount.textContent = String(tickets.length);
-    ticketCountSuffix.textContent = tickets.length === 1 ? '' : 's';
+    if (ticketCount) {
+        ticketCount.textContent = String(visibleTickets.length);
+    }
+    if (ticketCountSuffix) {
+        ticketCountSuffix.textContent = visibleTickets.length === 1 ? '' : 's';
+    }
 }

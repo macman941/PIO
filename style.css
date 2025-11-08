@@ -108,8 +108,14 @@ a {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: flex-start;
     gap: 0.5rem;
+}
+
+.panel__titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .panel__header h2 {
@@ -121,6 +127,34 @@ a {
     margin: 0;
     color: var(--muted);
     font-size: 0.95rem;
+}
+
+.panel__filter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.panel__filter span {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.panel__filter select {
+    min-width: 180px;
+}
+
+@media (max-width: 640px) {
+    .panel__filter {
+        width: 100%;
+    }
+
+    .panel__filter select {
+        width: 100%;
+        min-width: 0;
+    }
 }
 
 .form {
