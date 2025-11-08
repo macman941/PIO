@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Locate Tracker Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header class="hero">
+        <div class="hero__content">
+            <h1>Utility Locate Tracker</h1>
+            <p>Monitor, schedule, and document your underground utility locate requests from a single, intuitive dashboard.</p>
+            <a class="btn btn--primary" href="#dashboard">Explore Dashboard</a>
+        </div>
+        <div class="hero__illustration" aria-hidden="true">
+            <div class="pulse pulse--1"></div>
+            <div class="pulse pulse--2"></div>
+            <div class="pulse pulse--3"></div>
+        </div>
+    </header>
+
+    <main>
+        <section class="features" id="features">
+            <h2>Why teams choose our tracker</h2>
+            <div class="feature-grid">
+                <article class="feature-card">
+                    <h3>Real-time updates</h3>
+                    <p>Stay ahead with live notifications as technicians mark your locate requests as scheduled, in-progress, or completed.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Collaborative workflows</h3>
+                    <p>Assign responsibilities, store documentation, and keep your team aligned with built-in comments and attachments.</p>
+                </article>
+                <article class="feature-card">
+                    <h3>Smart insights</h3>
+                    <p>Identify bottlenecks and plan resources effectively with automated reporting on locate durations and revisit rates.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="dashboard" id="dashboard">
+            <div class="dashboard__header">
+                <h2>Locate Tracker Dashboard</h2>
+                <div class="filters">
+                    <label for="statusFilter" class="sr-only">Filter by status</label>
+                    <select id="statusFilter">
+                        <option value="all">All statuses</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="in-progress">In-progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="delayed">Delayed</option>
+                    </select>
+                    <label for="searchInput" class="sr-only">Search by ticket ID or address</label>
+                    <input type="search" id="searchInput" placeholder="Search ticket or address..." />
+                </div>
+            </div>
+
+            <div class="dashboard__grid">
+                <section class="card card--wide">
+                    <h3>Submit a new locate</h3>
+                    <form id="locateForm" class="form">
+                        <div class="form__group">
+                            <label for="ticketId">Ticket ID</label>
+                            <input type="text" id="ticketId" name="ticketId" placeholder="e.g. LOC-4582" required />
+                        </div>
+                        <div class="form__group">
+                            <label for="address">Site Address</label>
+                            <input type="text" id="address" name="address" placeholder="123 Utility Ave" required />
+                        </div>
+                        <div class="form__group">
+                            <label for="scheduledDate">Scheduled Date</label>
+                            <input type="date" id="scheduledDate" name="scheduledDate" required />
+                        </div>
+                        <div class="form__group form__group--half">
+                            <label for="status">Status</label>
+                            <select id="status" name="status">
+                                <option value="scheduled">Scheduled</option>
+                                <option value="in-progress">In-progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="delayed">Delayed</option>
+                            </select>
+                        </div>
+                        <div class="form__group form__group--half">
+                            <label for="contact">Lead technician</label>
+                            <input type="text" id="contact" name="contact" placeholder="Jamie Rivera" required />
+                        </div>
+                        <button type="submit" class="btn btn--primary">Add locate</button>
+                    </form>
+                </section>
+
+                <section class="card" aria-labelledby="statsHeading">
+                    <h3 id="statsHeading">At a glance</h3>
+                    <dl class="stat-grid">
+                        <div>
+                            <dt>Total locates</dt>
+                            <dd id="totalCount">0</dd>
+                        </div>
+                        <div>
+                            <dt>In progress</dt>
+                            <dd id="inProgressCount">0</dd>
+                        </div>
+                        <div>
+                            <dt>Completed this week</dt>
+                            <dd id="completedCount">0</dd>
+                        </div>
+                        <div>
+                            <dt>Delayed</dt>
+                            <dd id="delayedCount">0</dd>
+                        </div>
+                    </dl>
+                </section>
+            </div>
+
+            <section class="card" aria-labelledby="tableHeading">
+                <div class="card__header">
+                    <h3 id="tableHeading">Active locate requests</h3>
+                    <span class="card__badge" id="visibleCount">0 results</span>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Ticket ID</th>
+                                <th scope="col">Address</th>
+                                <th scope="col">Scheduled</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Lead</th>
+                            </tr>
+                        </thead>
+                        <tbody id="locateTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card card--wide" aria-labelledby="mapHeading">
+                <h3 id="mapHeading">Map overview</h3>
+                <div id="map" role="application" aria-label="Map showing locate request locations"></div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div>
+            <h4>Need an enterprise rollout?</h4>
+            <p>Contact us to connect your 811 tickets, GIS data, and contractor network.</p>
+        </div>
+        <a class="btn btn--secondary" href="mailto:team@locatetracker.com">Contact sales</a>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kN0GZ7Y0Cskv8wY=" crossorigin=""></script>
+    <script src="script.js"></script>
+</body>
+</html>
