@@ -1,196 +1,184 @@
-const locateData = [
-  {
-    ticketId: "LOC-4582",
-    address: "123 Utility Ave, Denver, CO",
-    scheduledDate: "2024-07-12",
-    status: "scheduled",
-    contact: "Jamie Rivera",
-    coordinates: [39.7392, -104.9903],
-  },
-  {
-    ticketId: "LOC-4610",
-    address: "512 Meadow St, Fort Collins, CO",
-    scheduledDate: "2024-07-10",
-    status: "in-progress",
-    contact: "Aria Patel",
-    coordinates: [40.5853, -105.0844],
-  },
-  {
-    ticketId: "LOC-4561",
-    address: "81 Lakeside Rd, Boulder, CO",
-    scheduledDate: "2024-07-08",
-    status: "completed",
-    contact: "Dylan Chen",
-    coordinates: [40.015, -105.2705],
-  },
-  {
-    ticketId: "LOC-4550",
-    address: "940 Pine Ridge Dr, Colorado Springs, CO",
-    scheduledDate: "2024-07-09",
-    status: "delayed",
-    contact: "Morgan Lee",
-    coordinates: [38.8339, -104.8214],
-  },
+const locatorOptions = [
+    'Alex Johnson',
+    'Brittany Lee',
+    'Carlos Mendoza',
+    'Danielle Chen',
+    'Evan Porter'
 ];
 
-const locateTable = document.getElementById("locateTable");
-const statusFilter = document.getElementById("statusFilter");
-const searchInput = document.getElementById("searchInput");
-const visibleCount = document.getElementById("visibleCount");
-const form = document.getElementById("locateForm");
+const tickets = [];
 
-const totalCountEl = document.getElementById("totalCount");
-const inProgressCountEl = document.getElementById("inProgressCount");
-const completedCountEl = document.getElementById("completedCount");
-const delayedCountEl = document.getElementById("delayedCount");
+const form = document.getElementById('ticketForm');
+const locatorSelect = document.getElementById('locatorName');
+const ticketList = document.getElementById('ticketList');
+const ticketTemplate = document.getElementById('ticketTemplate');
+const ticketCount = document.getElementById('ticketCount');
+const ticketCountSuffix = document.getElementById('ticketCountSuffix');
+const requiredFields = ['ticketNumber', 'jobAddress', 'locatorName', 'dateLocated'];
 
-let map;
-let markers = [];
+populateLocatorOptions();
+attachValidationHandlers();
+form.addEventListener('submit', handleSubmit);
 
-function initMap() {
-  map = L.map("map", {
-    zoomControl: false,
-  }).setView([39.5, -105.5], 7);
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "&copy; <a href='https://www.openstreetmap.org/'>OpenStreetMap</a> contributors",
-  }).addTo(map);
-
-  updateMapMarkers(locateData);
+function populateLocatorOptions() {
+    const fragment = document.createDocumentFragment();
+    locatorOptions.forEach((name) => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        fragment.appendChild(option);
+    });
+    locatorSelect.appendChild(fragment);
 }
 
-function updateMapMarkers(data) {
-  markers.forEach((marker) => marker.remove());
-  markers = [];
-
-  data.forEach((locate) => {
-    if (!locate.coordinates) return;
-
-    const marker = L.circleMarker(locate.coordinates, {
-      radius: 10,
-      weight: 2,
-      color: getStatusColor(locate.status),
-      fillColor: getStatusColor(locate.status),
-      fillOpacity: 0.6,
-    }).addTo(map);
-
-    marker.bindPopup(
-      `<strong>${locate.ticketId}</strong><br>${locate.address}<br>Status: ${formatStatus(
-        locate.status
-      )}`
-    );
-
-    markers.push(marker);
-  });
-
-  const bounds = L.latLngBounds(markers.map((marker) => marker.getLatLng()));
-  if (markers.length > 1) {
-    map.fitBounds(bounds.pad(0.2));
-  } else if (markers.length === 1) {
-    map.setView(bounds.getCenter(), 11);
-  }
+function attachValidationHandlers() {
+    requiredFields.forEach((fieldName) => {
+        const input = form[fieldName];
+        if (!input) return;
+        const eventType = input.tagName === 'SELECT' ? 'change' : 'input';
+        input.addEventListener(eventType, () => clearFieldError(fieldName));
+    });
 }
 
-function renderTable(data) {
-  locateTable.innerHTML = "";
+function handleSubmit(event) {
+    event.preventDefault();
 
-  const fragment = document.createDocumentFragment();
+    const formElements = {
+        ticketNumber: form.ticketNumber,
+        jobAddress: form.jobAddress,
+        locatorName: form.locatorName,
+        dateLocated: form.dateLocated
+    };
 
-  data.forEach((locate) => {
-    const row = document.createElement("tr");
+    const isValid = validateForm(formElements);
+    if (!isValid) {
+        return;
+    }
 
-    row.innerHTML = `
-      <td>${locate.ticketId}</td>
-      <td>${locate.address}</td>
-      <td>${formatDate(locate.scheduledDate)}</td>
-      <td><span class="status status--${locate.status}">${formatStatus(locate.status)}</span></td>
-      <td>${locate.contact}</td>
-    `;
+    const comments = form.comments.value.trim();
+    const files = Array.from(form.photos.files || []);
 
-    fragment.appendChild(row);
-  });
+    Promise.all(files.map(readFileAsDataURL))
+        .then((photos) => {
+            const ticket = {
+                ticketNumber: form.ticketNumber.value.trim(),
+                jobAddress: form.jobAddress.value.trim(),
+                locatorName: form.locatorName.value,
+                dateLocated: form.dateLocated.value,
+                comments,
+                photos
+            };
 
-  locateTable.appendChild(fragment);
-  visibleCount.textContent = `${data.length} ${data.length === 1 ? "result" : "results"}`;
+            tickets.unshift(ticket);
+            renderTickets();
+            form.reset();
+            locatorSelect.value = '';
+            requiredFields.forEach(clearFieldError);
+        })
+        .catch((error) => {
+            console.error('Error reading photos', error);
+        });
 }
 
-function formatDate(dateStr) {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+function validateForm(fields) {
+    let allValid = true;
+
+    Object.entries(fields).forEach(([name, input]) => {
+        const value = input.value.trim();
+        if (!value) {
+            setFieldError(name, 'This field is required.');
+            input.setAttribute('aria-invalid', 'true');
+            allValid = false;
+        } else {
+            clearFieldError(name);
+            input.removeAttribute('aria-invalid');
+        }
+    });
+
+    return allValid;
 }
 
-function formatStatus(status) {
-  return status
-    .replace("-", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+function setFieldError(fieldName, message) {
+    const errorEl = form.querySelector(`[data-error-for="${fieldName}"]`);
+    if (errorEl) {
+        errorEl.textContent = message;
+    }
 }
 
-function getStatusColor(status) {
-  const colors = {
-    scheduled: "#818cf8",
-    "in-progress": "#facc15",
-    completed: "#22c55e",
-    delayed: "#f97316",
-  };
-  return colors[status] || "#3b82f6";
+function clearFieldError(fieldName) {
+    const input = form[fieldName];
+    if (input) {
+        input.removeAttribute('aria-invalid');
+    }
+    const errorEl = form.querySelector(`[data-error-for="${fieldName}"]`);
+    if (errorEl) {
+        errorEl.textContent = '';
+    }
 }
 
-function updateStats() {
-  totalCountEl.textContent = locateData.length;
-  inProgressCountEl.textContent = locateData.filter(
-    (item) => item.status === "in-progress"
-  ).length;
-  completedCountEl.textContent = locateData.filter(
-    (item) => item.status === "completed"
-  ).length;
-  delayedCountEl.textContent = locateData.filter((item) => item.status === "delayed").length;
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve({ name: file.name, url: reader.result });
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
 }
 
-function applyFilters() {
-  const statusValue = statusFilter.value;
-  const searchValue = searchInput.value.trim().toLowerCase();
+function renderTickets() {
+    ticketList.innerHTML = '';
 
-  const filtered = locateData.filter((locate) => {
-    const matchesStatus = statusValue === "all" || locate.status === statusValue;
-    const matchesSearch =
-      locate.ticketId.toLowerCase().includes(searchValue) ||
-      locate.address.toLowerCase().includes(searchValue);
-    return matchesStatus && matchesSearch;
-  });
+    if (!tickets.length) {
+        const empty = document.createElement('p');
+        empty.className = 'empty-state';
+        empty.textContent = 'No locates recorded yet. Add your first entry with the form.';
+        ticketList.appendChild(empty);
+    } else {
+        tickets.forEach((ticket) => {
+            const entry = ticketTemplate.content.firstElementChild.cloneNode(true);
+            const numberEl = entry.querySelector('.ticket__number');
+            const addressEl = entry.querySelector('.ticket__address');
+            const locatorEl = entry.querySelector('.ticket__locator');
+            const dateEl = entry.querySelector('.ticket__date');
+            const commentsSection = entry.querySelector('.ticket__comments');
+            const commentsParagraph = commentsSection.querySelector('p');
+            const photosSection = entry.querySelector('.ticket__photos');
+            const photoGrid = entry.querySelector('.ticket__photo-grid');
 
-  renderTable(filtered);
-  updateMapMarkers(filtered);
+            numberEl.textContent = `Ticket ${ticket.ticketNumber}`;
+            addressEl.textContent = ticket.jobAddress;
+            locatorEl.textContent = ticket.locatorName;
+
+            const date = ticket.dateLocated ? new Date(ticket.dateLocated) : null;
+            if (date) {
+                const formatted = date.toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                dateEl.dateTime = ticket.dateLocated;
+                dateEl.textContent = formatted;
+            }
+
+            if (ticket.comments) {
+                commentsSection.hidden = false;
+                commentsParagraph.textContent = ticket.comments;
+            }
+
+            if (ticket.photos.length) {
+                photosSection.hidden = false;
+                ticket.photos.forEach((photo) => {
+                    const img = document.createElement('img');
+                    img.src = photo.url;
+                    img.alt = photo.name;
+                    photoGrid.appendChild(img);
+                });
+            }
+
+            ticketList.appendChild(entry);
+        });
+    }
+
+    ticketCount.textContent = String(tickets.length);
+    ticketCountSuffix.textContent = tickets.length === 1 ? '' : 's';
 }
-
-function handleFormSubmit(event) {
-  event.preventDefault();
-
-  const formData = new FormData(form);
-  const newLocate = {
-    ticketId: formData.get("ticketId").trim(),
-    address: formData.get("address").trim(),
-    scheduledDate: formData.get("scheduledDate"),
-    status: formData.get("status"),
-    contact: formData.get("contact").trim(),
-    coordinates: null,
-  };
-
-  locateData.unshift(newLocate);
-  updateStats();
-  applyFilters();
-  form.reset();
-}
-
-statusFilter.addEventListener("change", applyFilters);
-searchInput.addEventListener("input", applyFilters);
-form.addEventListener("submit", handleFormSubmit);
-
-document.addEventListener("DOMContentLoaded", () => {
-  updateStats();
-  renderTable(locateData);
-  initMap();
-});
