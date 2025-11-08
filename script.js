@@ -1,3 +1,125 @@
+const headerTitle = document.querySelector('.page-header h1');
+const headerSubtitle = document.querySelector('.page-header p');
+const startActions = document.getElementById('startActions');
+const loginPanel = document.getElementById('loginPanel');
+const signupPanel = document.getElementById('signupPanel');
+const appShell = document.getElementById('appShell');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const loginTrigger = document.querySelector('[data-action="show-login"]');
+const signupTrigger = document.querySelector('[data-action="show-signup"]');
+const authBackButtons = document.querySelectorAll('[data-action="auth-back"]');
+
+loginTrigger?.addEventListener('click', () => openAuthPanel('login'));
+signupTrigger?.addEventListener('click', () => openAuthPanel('signup'));
+authBackButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+        hideAuthPanels();
+        resetHeader();
+        startActions?.removeAttribute('hidden');
+    });
+});
+
+loginForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!loginForm.reportValidity()) {
+        return;
+    }
+
+    const email = loginForm.loginEmail.value.trim();
+    const displayName = deriveDisplayName('', email);
+
+    completeAuthentication(displayName);
+    loginForm.reset();
+});
+
+signupForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!signupForm.reportValidity()) {
+        return;
+    }
+
+    const name = signupForm.signupName.value.trim();
+    const email = signupForm.signupEmail.value.trim();
+    const displayName = deriveDisplayName(name, email);
+
+    completeAuthentication(displayName);
+    signupForm.reset();
+});
+
+function openAuthPanel(type) {
+    startActions?.setAttribute('hidden', '');
+    hideAuthPanels();
+
+    const panel = type === 'login' ? loginPanel : signupPanel;
+    if (!panel) return;
+
+    panel.removeAttribute('hidden');
+
+    if (headerSubtitle) {
+        headerSubtitle.textContent =
+            type === 'login'
+                ? 'Log in to access your locate tickets.'
+                : 'Create your account to start logging locate details.';
+    }
+
+    const firstInput = panel.querySelector('input');
+    if (firstInput) {
+        firstInput.focus();
+    }
+}
+
+function hideAuthPanels() {
+    loginPanel?.setAttribute('hidden', '');
+    signupPanel?.setAttribute('hidden', '');
+}
+
+function resetHeader() {
+    if (headerTitle) {
+        headerTitle.textContent = 'Locate Ticket Portal';
+    }
+    if (headerSubtitle) {
+        headerSubtitle.textContent = 'Choose how you’d like to get started.';
+    }
+    document.title = 'Locate Ticket Portal';
+}
+
+function deriveDisplayName(name, email) {
+    if (name) {
+        return name;
+    }
+
+    if (!email) {
+        return 'User';
+    }
+
+    const localPart = email.split('@')[0] || '';
+    if (!localPart) {
+        return 'User';
+    }
+
+    return localPart.charAt(0).toUpperCase() + localPart.slice(1);
+}
+
+function completeAuthentication(name) {
+    hideAuthPanels();
+    startActions?.setAttribute('hidden', '');
+    if (appShell) {
+        appShell.removeAttribute('hidden');
+    }
+    if (headerTitle) {
+        headerTitle.textContent = 'Locate Ticket Log';
+    }
+    if (headerSubtitle) {
+        headerSubtitle.textContent = `Welcome${name ? `, ${name}` : ''}! Record locate details and keep everything in one place.`;
+    }
+    document.title = 'Locate Ticket Log';
+    const ticketNumberField = form?.ticketNumber;
+    if (ticketNumberField) {
+        ticketNumberField.focus();
+    }
+}
+
 const locatorOptions = [
     'Alex Johnson',
     'Brittany Lee',
