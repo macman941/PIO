@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Locate Ticket Log</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header class="page-header">
+        <div class="page-header__content">
+            <h1>Locate Ticket Log</h1>
+            <p>Track completed locates with a simple form and keep photos and notes together for quick reference.</p>
+        </div>
+    </header>
+
+    <main class="layout">
+        <section class="panel" aria-labelledby="formHeading">
+            <div class="panel__header">
+                <h2 id="formHeading">Record locate details</h2>
+            </div>
+            <form id="ticketForm" class="form" novalidate>
+                <div class="form__row">
+                    <div class="form__group">
+                        <label for="ticketNumber">Locate ticket number</label>
+                        <input type="text" id="ticketNumber" name="ticketNumber" placeholder="e.g. 2024-11857" required />
+                        <p class="form__error" data-error-for="ticketNumber"></p>
+                    </div>
+                    <div class="form__group">
+                        <label for="jobAddress">Job site / address</label>
+                        <input type="text" id="jobAddress" name="jobAddress" placeholder="123 Main Street" required />
+                        <p class="form__error" data-error-for="jobAddress"></p>
+                    </div>
+                </div>
+
+                <div class="form__row">
+                    <div class="form__group">
+                        <label for="locatorName">Locator name</label>
+                        <select id="locatorName" name="locatorName" required>
+                            <option value="">Select locator</option>
+                        </select>
+                        <p class="form__error" data-error-for="locatorName"></p>
+                    </div>
+                    <div class="form__group">
+                        <label for="dateLocated">Date located</label>
+                        <input type="date" id="dateLocated" name="dateLocated" required />
+                        <p class="form__error" data-error-for="dateLocated"></p>
+                    </div>
+                </div>
+
+                <div class="form__group">
+                    <label for="comments">Comments</label>
+                    <textarea id="comments" name="comments" rows="4" placeholder="Notes, site conditions, follow-up details..."></textarea>
+                </div>
+
+                <div class="form__group">
+                    <label for="photos">Attach photos</label>
+                    <input type="file" id="photos" name="photos" accept="image/*" multiple />
+                    <p class="form__hint">You can select multiple images to attach to this locate.</p>
+                </div>
+
+                <button type="submit" class="btn btn--primary">Save locate</button>
+            </form>
+        </section>
+
+        <section class="panel" aria-labelledby="logHeading">
+            <div class="panel__header">
+                <h2 id="logHeading">Locate log</h2>
+                <p class="panel__subhead"><span id="ticketCount">0</span> locate<span id="ticketCountSuffix">s</span> recorded</p>
+            </div>
+            <div id="ticketList" class="ticket-list" role="list">
+                <p class="empty-state">No locates recorded yet. Add your first entry with the form.</p>
+            </div>
+        </section>
+    </main>
+
+    <template id="ticketTemplate">
+        <article class="ticket" role="listitem">
+            <header class="ticket__header">
+                <div>
+                    <p class="ticket__number"></p>
+                    <p class="ticket__address"></p>
+                </div>
+                <div class="ticket__meta">
+                    <span class="ticket__locator"></span>
+                    <time class="ticket__date" datetime=""></time>
+                </div>
+            </header>
+            <section class="ticket__comments" hidden>
+                <h3>Comments</h3>
+                <p></p>
+            </section>
+            <section class="ticket__photos" hidden>
+                <h3>Photos</h3>
+                <div class="ticket__photo-grid"></div>
+            </section>
+        </article>
+    </template>
+
+    <script src="script.js"></script>
+</body>
+</html>
