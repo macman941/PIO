@@ -78,12 +78,12 @@ function hideAuthPanels() {
 
 function resetHeader() {
     if (headerTitle) {
-        headerTitle.textContent = 'Locate Ticket Portal';
+        headerTitle.textContent = 'CFM Locate Ticket Log';
     }
     if (headerSubtitle) {
         headerSubtitle.textContent = 'Choose how you’d like to get started.';
     }
-    document.title = 'Locate Ticket Portal';
+    document.title = 'CFM Locate Ticket Log';
 }
 
 function deriveDisplayName(name, email) {
@@ -110,12 +110,12 @@ function completeAuthentication(name) {
         appShell.removeAttribute('hidden');
     }
     if (headerTitle) {
-        headerTitle.textContent = 'Locate Ticket Log';
+        headerTitle.textContent = 'CFM Locate Ticket Log';
     }
     if (headerSubtitle) {
         headerSubtitle.textContent = `Welcome${name ? `, ${name}` : ''}! Record locate details and keep everything in one place.`;
     }
-    document.title = 'Locate Ticket Log';
+    document.title = 'CFM Locate Ticket Log';
     const ticketNumberField = form?.ticketNumber;
     if (ticketNumberField) {
         ticketNumberField.focus();
@@ -138,11 +138,12 @@ function setActiveView(viewName) {
 }
 
 const locatorOptions = [
-    'Alex Johnson',
-    'Brittany Lee',
-    'Carlos Mendoza',
-    'Danielle Chen',
-    'Evan Porter'
+    'Lance Schrimer',
+    'Anthony Benza',
+    'Joseph Juhasz',
+    'Shane Lee',
+    'Shaun McDonald',
+    'Michel Lam'
 ];
 
 const STORAGE_KEY = 'locateTickets';
