@@ -64,7 +64,12 @@
         </section>
 
         <section id="appShell" class="layout" hidden>
-            <section class="panel" aria-labelledby="formHeading">
+            <nav class="app-nav" role="tablist" aria-label="Locate workspace navigation">
+                <button type="button" class="app-nav__tab" role="tab" aria-selected="true" data-view-target="record" aria-controls="recordSection">Record locate</button>
+                <button type="button" class="app-nav__tab" role="tab" aria-selected="false" data-view-target="archive" aria-controls="archiveSection">Ticket archive</button>
+            </nav>
+
+            <section class="panel" id="recordSection" aria-labelledby="formHeading" data-view="record" role="tabpanel">
                 <div class="panel__header">
                     <h2 id="formHeading">Record locate details</h2>
                 </div>
@@ -112,18 +117,24 @@
                 </form>
             </section>
 
-            <section class="panel" aria-labelledby="archiveHeading">
+            <section class="panel" id="archiveSection" aria-labelledby="archiveHeading" data-view="archive" role="tabpanel" hidden aria-hidden="true">
                 <div class="panel__header">
                     <div class="panel__titles">
                         <h2 id="archiveHeading">Ticket archive</h2>
                         <p class="panel__subhead">Showing <span id="ticketCount">0</span> locate<span id="ticketCountSuffix">s</span></p>
                     </div>
-                    <label class="panel__filter" for="archiveLocatorFilter">
-                        <span>Filter by locator</span>
-                        <select id="archiveLocatorFilter" name="archiveLocatorFilter">
-                            <option value="all">All locators</option>
-                        </select>
-                    </label>
+                    <div class="panel__controls">
+                        <label class="panel__filter" for="archiveLocatorFilter">
+                            <span>Filter by locator</span>
+                            <select id="archiveLocatorFilter" name="archiveLocatorFilter">
+                                <option value="all">All locators</option>
+                            </select>
+                        </label>
+                        <label class="panel__search" for="archiveSearch">
+                            <span class="visually-hidden">Search tickets</span>
+                            <input type="search" id="archiveSearch" name="archiveSearch" placeholder="Search ticket # or address" />
+                        </label>
+                    </div>
                 </div>
                 <div id="ticketList" class="ticket-list" role="list">
                     <p class="empty-state">No locates recorded yet. Add your first entry with the form.</p>
