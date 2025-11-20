@@ -22,6 +22,22 @@ body {
     color: var(--text);
 }
 
+.logo-banner {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: clamp(0.75rem, 3vw, 1.25rem) clamp(1.5rem, 5vw, 4rem);
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+}
+
+.logo-banner__image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: none;
+}
+
 [hidden] {
     display: none !important;
 }
