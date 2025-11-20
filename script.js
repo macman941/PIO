@@ -157,6 +157,9 @@ const ticketList = document.getElementById('ticketList');
 const ticketTemplate = document.getElementById('ticketTemplate');
 const ticketCount = document.getElementById('ticketCount');
 const ticketCountSuffix = document.getElementById('ticketCountSuffix');
+const lightbox = document.getElementById('photoLightbox');
+const lightboxImage = lightbox?.querySelector('img');
+const lightboxCaption = lightbox?.querySelector('figcaption');
 const requiredFields = ['ticketNumber', 'jobAddress', 'locatorName', 'dateLocated'];
 
 populateLocatorOptions();
@@ -169,6 +172,20 @@ viewTriggers.forEach((trigger) => {
         const target = trigger.dataset.viewTarget || 'record';
         setActiveView(target);
     });
+});
+lightbox?.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const shouldClose = target.dataset.action === 'close-lightbox';
+    if (shouldClose) {
+        closeLightbox();
+    }
+});
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !lightbox?.hidden) {
+        closeLightbox();
+    }
 });
 setActiveView('record');
 renderTickets();
@@ -442,6 +459,14 @@ function renderTickets() {
                     const img = document.createElement('img');
                     img.src = photo.url;
                     img.alt = photo.name;
+                    img.tabIndex = 0;
+                    img.addEventListener('click', () => openLightbox(photo));
+                    img.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            openLightbox(photo);
+                        }
+                    });
                     photoGrid.appendChild(img);
                 });
             }
@@ -456,4 +481,33 @@ function renderTickets() {
     if (ticketCountSuffix) {
         ticketCountSuffix.textContent = matchingTickets.length === 1 ? '' : 's';
     }
+}
+
+function openLightbox(photo) {
+    if (!lightbox || !lightboxImage || !lightboxCaption) {
+        return;
+    }
+
+    lightboxImage.src = photo.url;
+    lightboxImage.alt = photo.name || 'Ticket photo';
+    lightboxCaption.textContent = photo.name || '';
+    lightbox.hidden = false;
+    document.body.style.overflow = 'hidden';
+
+    const closeButton = lightbox.querySelector('.lightbox__close');
+    if (closeButton instanceof HTMLElement) {
+        closeButton.focus();
+    }
+}
+
+function closeLightbox() {
+    if (!lightbox || !lightboxImage || !lightboxCaption) {
+        return;
+    }
+
+    lightbox.hidden = true;
+    lightboxImage.src = '';
+    lightboxImage.alt = '';
+    lightboxCaption.textContent = '';
+    document.body.style.overflow = '';
 }

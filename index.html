@@ -166,6 +166,15 @@
         </article>
     </template>
 
+    <div class="lightbox" id="photoLightbox" hidden aria-modal="true" role="dialog">
+        <div class="lightbox__backdrop" data-action="close-lightbox"></div>
+        <figure class="lightbox__content">
+            <button type="button" class="lightbox__close" aria-label="Close preview" data-action="close-lightbox">×</button>
+            <img src="" alt="" />
+            <figcaption></figcaption>
+        </figure>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

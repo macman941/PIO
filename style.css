@@ -477,6 +477,85 @@ input[type="file"] {
     border-radius: 10px;
     border: 1px solid var(--border);
     background: #f0f4f8;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ticket__photo-grid img:hover,
+.ticket__photo-grid img:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px -12px rgba(31, 111, 235, 0.6);
+    outline: none;
+}
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    z-index: 999;
+}
+
+.lightbox[hidden] {
+    display: none;
+}
+
+.lightbox__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.65);
+}
+
+.lightbox__content {
+    position: relative;
+    z-index: 1;
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 1rem;
+    box-shadow: 0 20px 30px -18px rgba(0, 0, 0, 0.45);
+    max-width: min(90vw, 960px);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.lightbox__content img {
+    width: 100%;
+    max-height: 75vh;
+    object-fit: contain;
+    border-radius: 12px;
+    background: #0f172a;
+}
+
+.lightbox__content figcaption {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--muted);
+    text-align: center;
+}
+
+.lightbox__close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border-radius: 999px;
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+}
+
+.lightbox__close:hover,
+.lightbox__close:focus-visible {
+    background: rgba(0, 0, 0, 0.75);
+    outline: none;
 }
 
 @media (max-width: 599px) {
