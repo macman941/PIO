@@ -9,6 +9,8 @@ const signupForm = document.getElementById('signupForm');
 const loginTrigger = document.querySelector('[data-action="show-login"]');
 const signupTrigger = document.querySelector('[data-action="show-signup"]');
 const authBackButtons = document.querySelectorAll('[data-action="auth-back"]');
+const viewTriggers = document.querySelectorAll('[data-view-target]');
+const viewPanels = document.querySelectorAll('[data-view]');
 
 loginTrigger?.addEventListener('click', () => openAuthPanel('login'));
 signupTrigger?.addEventListener('click', () => openAuthPanel('signup'));
@@ -76,12 +78,12 @@ function hideAuthPanels() {
 
 function resetHeader() {
     if (headerTitle) {
-        headerTitle.textContent = 'Locate Ticket Portal';
+        headerTitle.textContent = 'CFM Locate Ticket Log';
     }
     if (headerSubtitle) {
         headerSubtitle.textContent = 'Choose how you’d like to get started.';
     }
-    document.title = 'Locate Ticket Portal';
+    document.title = 'CFM Locate Ticket Log';
 }
 
 function deriveDisplayName(name, email) {
@@ -108,31 +110,49 @@ function completeAuthentication(name) {
         appShell.removeAttribute('hidden');
     }
     if (headerTitle) {
-        headerTitle.textContent = 'Locate Ticket Log';
+        headerTitle.textContent = 'CFM Locate Ticket Log';
     }
     if (headerSubtitle) {
         headerSubtitle.textContent = `Welcome${name ? `, ${name}` : ''}! Record locate details and keep everything in one place.`;
     }
-    document.title = 'Locate Ticket Log';
+    document.title = 'CFM Locate Ticket Log';
     const ticketNumberField = form?.ticketNumber;
     if (ticketNumberField) {
         ticketNumberField.focus();
     }
 }
 
+function setActiveView(viewName) {
+    viewPanels.forEach((panel) => {
+        const isActive = panel.dataset.view === viewName;
+        panel.toggleAttribute('hidden', !isActive);
+        panel.setAttribute('aria-hidden', String(!isActive));
+    });
+
+    viewTriggers.forEach((trigger) => {
+        const isActive = trigger.dataset.viewTarget === viewName;
+        trigger.classList.toggle('is-active', isActive);
+        trigger.setAttribute('aria-selected', String(isActive));
+        trigger.setAttribute('tabindex', isActive ? '0' : '-1');
+    });
+}
+
 const locatorOptions = [
-    'Alex Johnson',
-    'Brittany Lee',
-    'Carlos Mendoza',
-    'Danielle Chen',
-    'Evan Porter'
+    'Lance Schrimer',
+    'Anthony Benza',
+    'Joseph Juhasz',
+    'Shane Lee',
+    'Shaun McDonald',
+    'Michel Lam'
 ];
 
-const tickets = [];
+const STORAGE_KEY = 'locateTickets';
+let tickets = loadTickets();
 
 const form = document.getElementById('ticketForm');
 const locatorSelect = document.getElementById('locatorName');
 const archiveFilter = document.getElementById('archiveLocatorFilter');
+const archiveSearch = document.getElementById('archiveSearch');
 const ticketList = document.getElementById('ticketList');
 const ticketTemplate = document.getElementById('ticketTemplate');
 const ticketCount = document.getElementById('ticketCount');
@@ -142,15 +162,73 @@ const requiredFields = ['ticketNumber', 'jobAddress', 'locatorName', 'dateLocate
 populateLocatorOptions();
 attachValidationHandlers();
 archiveFilter?.addEventListener('change', () => renderTickets());
+archiveSearch?.addEventListener('input', () => renderTickets());
 form?.addEventListener('submit', handleSubmit);
+viewTriggers.forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+        const target = trigger.dataset.viewTarget || 'record';
+        setActiveView(target);
+    });
+});
+setActiveView('record');
 renderTickets();
+
+function loadTickets() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) {
+        return [];
+    }
+
+    try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+            return parsed.map((ticket) => ({
+                ticketNumber: ticket.ticketNumber || '',
+                jobAddress: ticket.jobAddress || '',
+                locatorName: ticket.locatorName || '',
+                dateLocated: ticket.dateLocated || '',
+                comments: ticket.comments || '',
+                photos: Array.isArray(ticket.photos) ? ticket.photos : []
+            }));
+        }
+    } catch (error) {
+        console.warn('Unable to parse stored tickets', error);
+    }
+
+    return [];
+}
+
+function persistTickets() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets));
+}
 
 function populateLocatorOptions() {
     if (!locatorSelect) {
         return;
     }
 
-    const sortedLocators = [...locatorOptions].sort((a, b) => a.localeCompare(b));
+    const previousSelection = locatorSelect.value;
+    const previousFilter = archiveFilter?.value || 'all';
+
+    locatorSelect.innerHTML = '';
+    if (archiveFilter) {
+        archiveFilter.innerHTML = '';
+    }
+
+    const formDefault = document.createElement('option');
+    formDefault.value = '';
+    formDefault.textContent = 'Select locator';
+    locatorSelect.appendChild(formDefault);
+
+    if (archiveFilter) {
+        const filterDefault = document.createElement('option');
+        filterDefault.value = 'all';
+        filterDefault.textContent = 'All locators';
+        archiveFilter.appendChild(filterDefault);
+    }
+
+    const locatorPool = new Set([...locatorOptions, ...tickets.map((ticket) => ticket.locatorName).filter(Boolean)]);
+    const sortedLocators = [...locatorPool].sort((a, b) => a.localeCompare(b));
 
     sortedLocators.forEach((name) => {
         const formOption = document.createElement('option');
@@ -166,8 +244,12 @@ function populateLocatorOptions() {
         }
     });
 
+    const hasPreviousFormSelection = sortedLocators.includes(previousSelection);
+    locatorSelect.value = hasPreviousFormSelection ? previousSelection : '';
+
     if (archiveFilter) {
-        archiveFilter.value = 'all';
+        const hasPreviousFilterSelection = previousFilter === 'all' || sortedLocators.includes(previousFilter);
+        archiveFilter.value = hasPreviousFilterSelection ? previousFilter : 'all';
     }
 }
 
@@ -218,7 +300,9 @@ function handleSubmit(event) {
             };
 
             tickets.unshift(ticket);
+            populateLocatorOptions();
             renderTickets();
+            persistTickets();
             form.reset();
             if (locatorSelect) {
                 locatorSelect.value = '';
@@ -296,16 +380,32 @@ function renderTickets() {
             ? tickets
             : tickets.filter((ticket) => ticket.locatorName === selectedLocator);
 
-    if (!visibleTickets.length) {
+    const searchTerm = (archiveSearch?.value || '').trim().toLowerCase();
+    const matchingTickets = searchTerm
+        ? visibleTickets.filter((ticket) => {
+              const haystack = `${ticket.ticketNumber} ${ticket.jobAddress}`.toLowerCase();
+              return haystack.includes(searchTerm);
+          })
+        : visibleTickets;
+
+    if (!matchingTickets.length) {
         const empty = document.createElement('p');
         empty.className = 'empty-state';
-        empty.textContent =
-            selectedLocator === 'all'
-                ? 'No locates recorded yet. Add your first entry with the form.'
-                : 'No locates recorded for this locator yet.';
+        const hasSearch = Boolean(searchTerm);
+        const hasLocatorFilter = selectedLocator !== 'all';
+
+        if (!tickets.length) {
+            empty.textContent = 'No locates recorded yet. Add your first entry with the form.';
+        } else if (hasSearch) {
+            empty.textContent = 'No tickets match your search yet. Try a different ticket number or address.';
+        } else if (hasLocatorFilter) {
+            empty.textContent = 'No locates recorded for this locator yet.';
+        } else {
+            empty.textContent = 'No locates match the current filters.';
+        }
         ticketList.appendChild(empty);
     } else {
-        visibleTickets.forEach((ticket) => {
+        matchingTickets.forEach((ticket) => {
             const entry = ticketTemplate.content.firstElementChild.cloneNode(true);
             const numberEl = entry.querySelector('.ticket__number');
             const addressEl = entry.querySelector('.ticket__address');
@@ -351,9 +451,9 @@ function renderTickets() {
     }
 
     if (ticketCount) {
-        ticketCount.textContent = String(visibleTickets.length);
+        ticketCount.textContent = String(matchingTickets.length);
     }
     if (ticketCountSuffix) {
-        ticketCountSuffix.textContent = visibleTickets.length === 1 ? '' : 's';
+        ticketCountSuffix.textContent = matchingTickets.length === 1 ? '' : 's';
     }
 }
